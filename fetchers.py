@@ -14,3 +14,13 @@ def fetch_country_dict():
         country_link = container.get("href")
         country_dict[country_name] = base_url+country_link
     return country_dict
+
+def fetch_vehicle_dict(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    vehicle_dict = {}
+    for row in soup.find_all("tr"):
+        data = row.find("a") 
+        if data is not None:
+            vehicle_dict[data.text] = base_url+data.get("href")
+    return vehicle_dict
