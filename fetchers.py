@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup   
 import requests
+import json
 
 base_url="https://wiki.warthunder.com/"
 
@@ -29,21 +30,69 @@ def fetch_vehicle_dict(url):
                 vehicle_dict[data.find("span").text] = data.get("href")
     return vehicle_dict
 
+def fetch_stat(unit):
+    stat_dict = {}
+    if unit.find(class_="game-unit_chars-subline"):
+        line = unit.find(class_="game-unit_chars-line").extract().text
+        previous_key = "foo"
+        for subline in unit.find_all(class_="game-unit_chars-subline")+unit.find_all(class_="game-unit_chars-line"):
+            spans = [span.text.strip() for span in subline.find_all("span")]
+            if len(spans) == 1:
+                stat_dict[previous_key] = stat_dict[previous_key] + spans[0]
+            else:
+                stat_dict.update({spans[0]:spans[1]})
+            previous_key = spans[0]
+    return stat_dict
+
+
+
+        
+        
+        
+
+
+
 def fetch_vehicle_data(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
     vehicle_data = {"specification":{},"weapon":{},"economy":{}}
 
     for category in vehicle_data:
-        for column in soup.find(id=category).find_all(class_="game-unit_chars-block"):
-            for row in column.find_all("div"):
-                stat_name = row.find("span")
-                if stat_name is None:
-                    continue
-                stat_name = stat_name.text
-                for stat_container in row.find_all(class_="=game-unit_chars-subline"):
-                    stat = stat_container.find_all("span")
-                    vehicle_data[category][stat_name] = {stat[0].text:stat[1].text}
+        for block in soup.find_all(class_="block mb-3"):
+            header = block.find(class_="block-header")
+            vehicle_data[category].update(fetch_stat(block))
+
+    
+
+
+
+    with open("op.txt", 'w') as f:
+        f.write(json.dumps(vehicle_data, indent=4))
+
+            
+                            
+
+
+
+
+                     
+                    
+                         
+
+
+                #chars_line = block.find(class_="game-unit_chars-line")
+                #if chars_line is not None:
+                #    vehicle_data[category][chars_line] = block.find(class_="game-unit_chars-subline").text
+                #else:
+
+            
+
+                
+
+
+                
+            
+            
 
                     
                     
