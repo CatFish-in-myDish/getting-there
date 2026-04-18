@@ -1,6 +1,24 @@
 from bs4 import BeautifulSoup   
 import requests
 import json
+import psycopg2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def connect_to_database():
+    try:
+        return psycopg2.connect(
+            database=os.environ.get(""),
+            user=os.environ.get(),
+            password=os.environ.get(),
+            host=os.environ.get(),
+            port=os.environ.get()
+        )
+    except:
+        raise Exception("couldn't login to the database, try again")
+    
 
 base_url="https://wiki.warthunder.com/"
 
@@ -15,6 +33,7 @@ def fetch_vechicles(url):
         table = table.find_all("a")
     for x in table:
         vechicles.append(x["href"])
+    get_basic_vechicle_data(vechicles[0])
     return vechicles    
 
 def fetch_country_dict():
@@ -30,8 +49,67 @@ def fetch_country_dict():
     for x in country_dict:
         fetch_vechicles(x)
 
+"""
+unit -> general and unit specific data
+
+"""
+def function_name_to_be_edited(soup):
+    return (
+        soup.find(id = "general"),
+        soup.find(class_ = "game-unit_content")
+    )
+
 def get_basic_vechicle_data(url):
     url = base_url + url
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    vechile_type = soup.find(class_ = "game-unit_nation")
+    print(vechile_type.text.strip())
+    
+    if not vechile_type:
+        print("something went wrong")
+        return
+
+    general, unit_content = function_name_to_be_edited(soup)
+
+    match (vechile_type.text.strip().lower()):
+        case "ground vehicles":
+            get_ground(general, unit_content)
+        case "aviation":
+            get_aviation(soup)
+        case "helicopters":
+            get_helicopters(soup)
+        case "bluewater fleet":
+            get_bluewater_fleet(soup)
+        case "coastal fleet":
+            get_coastal_fleet(soup)
+        case _:
+            print("Error with the game unit nation div")
+
+def get_ground(general, unit_content):
+    # main_div = soup.find(id = "general")
+    type = "ground"
+    vehicle_name = general.find(class_ = "game-unit_name")
+    rank = general.find(class_ = "game-unit_card-info_value").text.strip()
+    test = general.find_all(class_ = "game-unit_br-item")
+    brs = dict()
+    for x in test:
+        pass
+    print(vehicle_name.text.strip())
+    
+
+
+def get_aviation(soup):
+    pass
+
+def get_helicopters(soup):
+    pass
+
+def get_bluewater_fleet(soup):
+    pass
+
+def get_coastal_fleet(soup):
+    pass
 
 # def fetch_vehicle_dict(url):
 #     response = requests.get(url)
